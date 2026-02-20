@@ -67,6 +67,7 @@ export const SignUpView = () => {
                     router.push('/')
                 },
                 onError: ( {error} ) => {
+                    setPending(false)
                     setError(error.message)
                 }
             }
