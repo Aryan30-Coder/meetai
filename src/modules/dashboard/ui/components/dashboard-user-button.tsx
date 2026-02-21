@@ -35,7 +35,6 @@ const DashboardUserButton = () => {
     const router = useRouter()
     const isMobile = useIsMobile()
     const {data, isPending} = authClient.useSession()
-    console.log(data?.user.image)
 
     if(isPending || !data?.user){
         return null
