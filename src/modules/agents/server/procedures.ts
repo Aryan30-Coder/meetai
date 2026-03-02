@@ -6,7 +6,7 @@ import {
 } from "@/trpc/init";
 import { agentInsertSchema } from "../schema";
 import { eq } from "drizzle-orm";
-import z from "zod";
+import {z} from "zod";
 
 export const agentsRouter = createTRPCRouter({
   //TODO: change the baseProcedure to protectedProcedure
