@@ -4,7 +4,7 @@ import { useState } from "react"
 import { PlusIcon, XCircleIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { NewAgentDialog } from "./agent-dialog"
+import { NewAgentDialog } from "./new-agent-dialog"
 import { useAgentFilters } from "../../hooks/use-agents-filters"
 import { AgentsSearchFilters } from "./agents-search-filter"
 import { DEFAULT_PAGE } from "@/constants"
