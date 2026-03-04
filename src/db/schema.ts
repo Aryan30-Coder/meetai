@@ -103,10 +103,10 @@ export const meetings = pgTable("meetings", {
         .primaryKey()
         .$defaultFn(() => nanoid()),
   name: text("name").notNull(),
-  userId: text("userId")
+  userId: text("user_id")
     .notNull()
     .references(() => user.id, {onDelete: "cascade"}),
-  agentId: text("agentId")
+  agentId: text("agent_id")
     .notNull()
     .references(() => agents.id, {onDelete: "cascade"}),
   status: meetingStatus("status").notNull().default("upcoming"),
