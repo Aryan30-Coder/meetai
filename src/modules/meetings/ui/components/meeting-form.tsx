@@ -1,0 +1,188 @@
+import { useTRPC } from "@/trpc/client";
+import { MeetingGetOne } from "../../types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { meetingsInsertSchema } from "../../schema";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormField,
+  FormDescription,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useState } from "react";
+import { CommandSelect } from "@/components/command-select";
+import { GeneratedAvatar } from "@/components/generate-avatar";
+import { NewAgentDialog } from "@/modules/agents/ui/components/new-agent-dialog";
+
+
+interface MeetingFormProps {
+  onSuccess?: (id?: string) => void;
+  onCancel?: () => void;
+  initialValues?: MeetingGetOne;
+}
+
+export const MeetingForm = ({
+  onSuccess,
+  onCancel,
+  initialValues,
+}: MeetingFormProps) => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const [agentSearch, setAgentSearch] = useState("")
+  const [newAgentDialog, setNewAgentDialog ] = useState(false)
+
+  const agents = useQuery(
+    trpc.agents.getMany.queryOptions({
+      pageSize: 100,
+      search: agentSearch
+    })
+  )
+
+  const createMeeting = useMutation(
+    trpc.meetings.create.mutationOptions({
+      onSuccess: async (data) => {
+        await queryClient.invalidateQueries(trpc.meetings.getMany.queryOptions({}));
+
+        //TODO: invalidate free tier usage
+
+        onSuccess?.(data.id);
+      },
+
+      onError: (error) => {
+        toast.error(error.message)
+
+        //TODO: if the error is "FORBIDDEN", redirect to upgrade
+      },
+    }),
+  );
+
+  const updateMeeting = useMutation(
+    trpc.meetings.update.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(trpc.meetings.getMany.queryOptions({}));
+
+        if (initialValues?.id) {
+          await queryClient.invalidateQueries(
+            trpc.meetings.getOne.queryOptions({ id: initialValues.id }),
+          );
+        }
+
+        onSuccess?.();
+      },
+
+      onError: (error) => {
+        toast.error(error.message)
+
+        //TODO: if the error is "FORBIDDEN", redirect to upgrade
+      },
+    }),
+  );
+
+  const form = useForm<z.infer<typeof meetingsInsertSchema>>({
+    resolver: zodResolver(meetingsInsertSchema),
+    defaultValues: {
+      name: initialValues?.name ?? "",
+      agentId: initialValues?.agentId ?? "",
+    },
+  });
+
+  const isEdit = !!initialValues?.id;
+  const isPending = createMeeting.isPending || updateMeeting.isPending;
+
+  const onSubmit = (values: z.infer<typeof meetingsInsertSchema>) => {
+    if (isEdit) {
+      updateMeeting.mutate({...values, id: initialValues.id})
+    } else {
+      createMeeting.mutate(values);
+    }
+  };
+
+  return (
+    <>
+      <NewAgentDialog open={newAgentDialog} onOpenChange={setNewAgentDialog} />
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            name="name"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="e.g. Math Consultations" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="agentId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Agent</FormLabel>
+                <FormControl>
+                  <CommandSelect
+                    options={(agents?.data?.items ?? []).map((agent) => ({
+                      id: agent.id,
+                      value: agent.id,
+                      children: (
+                        <div className="flex items-center gap-x-2">
+                          <GeneratedAvatar 
+                            seed={agent.name}
+                            variant="botttsNeutral"
+                            className="border size-6"
+                          />
+                          <span>{agent.name}</span>
+                        </div>
+                      )
+                    }))}
+                    onSelect={field.onChange}
+                    onSearch={setAgentSearch}
+                    value={field.value}
+                    placeholder="Select an agent"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Not found what you&apos;re looking for?
+                  <Button
+                    type="button"
+                    className="text-primary hover:underline bg-background hover:bg-background pointer-cursor"
+                    onClick={() => setNewAgentDialog(true)}
+                  >
+                    Create a new Agent
+                  </Button>
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-between items-center">
+            {onCancel && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isPending}
+                onClick={() => onCancel()}
+              >
+                Cancel
+              </Button>
+            )}
+            <Button type="submit" disabled={isPending}>
+              {isEdit ? "Update" : "Create"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
+  );
+};
