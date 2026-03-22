@@ -22,7 +22,7 @@ const Page = async ({ params }: Props) => {
     })
 
     if(!session){
-        redirect('sign-in')
+        redirect('/sign-in')
     }
 
     const queryClient = getQueryClient();
