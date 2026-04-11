@@ -117,4 +117,5 @@ export const meetings = pgTable("meetings", {
   summary: text("summary"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  lastProcessedMessageId: text("last_processed_message_id"),
 })
