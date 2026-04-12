@@ -26,6 +26,7 @@ export const MeetingsView = () => {
               <EmptyState
                 title="Create your first meeting"
                 description="Schedule a meeting to connect with others. Each meeting lets you collaborate, share ideas, and interact with participants in real time."
+                image=""
               />
             ) : (
               <DataTable data={data.items} columns={columns} onRowClick={(row) => {router.push(`/meetings/${row.id}`)}}/>

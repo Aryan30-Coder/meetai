@@ -26,6 +26,7 @@ export const AgentsView = () => {
           <EmptyState
             title="Create your first agent"
             description="Create an agent to join your meetings. Each agent will follow your instructions and can interact with participants during the call."
+            image=''
           />
         ) : (
           <DataTable data={data.items} columns={columns} onRowClick={(row) => {router.push(`/agents/${row.id}`)}}/>
